@@ -1,6 +1,8 @@
 import json
 import os
 import psycopg2
+import urllib.request
+import urllib.error
 
 
 CORS_HEADERS = {
@@ -75,8 +77,54 @@ def handler(event: dict, context) -> dict:
     cur.close()
     conn.close()
 
+    upstream_url = os.environ.get("UPSTREAM_URL", "").strip()
+    if not upstream_url:
+        return {
+            "statusCode": 200,
+            "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
+            "body": json.dumps({"ok": True, "logged": True}),
+        }
+
+    # Пересылаем запрос на upstream
+    # Добавляем query string, если есть
+    if query_params:
+        from urllib.parse import urlencode
+        upstream_url = upstream_url.rstrip("/") + "?" + urlencode(query_params)
+
+    body_bytes = body.encode("utf-8") if body else None
+
+    # Формируем заголовки для upstream (пропускаем служебные hop-by-hop)
+    skip_headers = {"host", "content-length", "transfer-encoding", "connection"}
+    forward_headers = {
+        k: v for k, v in headers.items()
+        if k.lower() not in skip_headers
+    }
+    if body_bytes and "Content-Type" not in forward_headers:
+        forward_headers["Content-Type"] = "application/json"
+
+    req = urllib.request.Request(
+        upstream_url,
+        data=body_bytes,
+        headers=forward_headers,
+        method=method,
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            upstream_status = resp.status
+            upstream_body = resp.read().decode("utf-8", errors="replace")
+            upstream_ct = resp.headers.get("Content-Type", "application/json")
+    except urllib.error.HTTPError as e:
+        upstream_status = e.code
+        upstream_body = e.read().decode("utf-8", errors="replace")
+        upstream_ct = e.headers.get("Content-Type", "application/json")
+    except urllib.error.URLError as e:
+        upstream_status = 502
+        upstream_body = json.dumps({"error": "upstream_unreachable", "detail": str(e.reason)})
+        upstream_ct = "application/json"
+
     return {
-        "statusCode": 200,
-        "headers": {**CORS_HEADERS, "Content-Type": "application/json"},
-        "body": json.dumps({"ok": True, "logged": True}),
+        "statusCode": upstream_status,
+        "headers": {**CORS_HEADERS, "Content-Type": upstream_ct},
+        "body": upstream_body,
     }

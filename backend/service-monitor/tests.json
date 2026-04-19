@@ -1,0 +1,20 @@
+{
+  "tests": [
+    {
+      "name": "Unauthorized — no token",
+      "method": "POST",
+      "path": "/",
+      "body": {"targets": ["https://example.com"]},
+      "expectedStatus": 401,
+      "expectedBody": {"error": "Unauthorized"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200,
+      "bodyMatcher": "partial"
+    }
+  ]
+}

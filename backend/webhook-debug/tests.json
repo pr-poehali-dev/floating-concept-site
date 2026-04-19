@@ -1,0 +1,22 @@
+{
+  "tests": [
+    {
+      "name": "POST webhook — log request",
+      "method": "POST",
+      "path": "/",
+      "body": "{\"event\": \"test\", \"source\": \"stripe\"}",
+      "headers": {"Content-Type": "application/json"},
+      "expectedStatus": 200,
+      "expectedBody": {"ok": true, "logged": true},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "GET list — unauthorized",
+      "method": "GET",
+      "path": "/?action=list",
+      "expectedStatus": 401,
+      "expectedBody": {"error": "Unauthorized"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

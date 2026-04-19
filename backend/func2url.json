@@ -1,4 +1,5 @@
 {
+  "vhost-scan": "https://functions.poehali.dev/1226a39a-a122-415b-b47e-f9fbf28f7cd5",
   "tcp-check": "https://functions.poehali.dev/3e103822-8fb5-4f5e-8641-f26fa9e6de49",
   "service-monitor": "https://functions.poehali.dev/153124e3-db66-4a32-bf9a-4514b3e0ce87",
   "env-check": "https://functions.poehali.dev/be05d02a-0ff3-4b09-a8b3-7300d2156664",

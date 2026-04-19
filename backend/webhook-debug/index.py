@@ -102,10 +102,6 @@ def handler(event: dict, context) -> dict:
     if body_bytes and "Content-Type" not in forward_headers:
         forward_headers["Content-Type"] = "application/json"
 
-    upstream_cookie = os.environ.get("UPSTREAM_COOKIE", "").strip()
-    if upstream_cookie:
-        forward_headers["Cookie"] = upstream_cookie
-
     req = urllib.request.Request(
         upstream_url,
         data=body_bytes,
